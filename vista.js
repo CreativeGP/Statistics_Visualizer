@@ -50,7 +50,6 @@ $(() => {
             spec.push(flat_data.filter(e => e == i).length);
         }
 
-        data = spec;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         let width = 500 / spec.length;
@@ -59,7 +58,27 @@ $(() => {
             ctx.fillStyle = 'white';
             ctx.fillRect(start+width*i, 500-spec[i]*3, width-1, spec[i]*3);
         }
-    };
+
+        let _mean = ss.mean(data);
+        let _mode = ss.mode(data.map(Math.floor));
+        let _median = ss.median(data);
+        let _stdev = ss.standardDeviation(data);
+
+        console.log(data);
+        console.log([_mean, _mode, _median, _stdev]);
+
+        ctx.fillStyle = 'red';
+        ctx.fillRect(start+width*_mean, 200, width-1, 300);
+
+        ctx.fillStyle = 'blue';
+        ctx.fillRect(start+width*_mode, 200, width-1, 300);
+
+        ctx.fillStyle = 'purple';
+        ctx.fillRect(start+width*_median, 200, width-1, 300);
+
+        ctx.fillStyle = 'yellow';
+        ctx.fillRect(start+width*_stdev, 200, width-1, 300);
+};
 
     let redraw_text = () => $('h1').text(`Statistics Visualizer [${type}] ${kind}`);
 
@@ -72,11 +91,11 @@ $(() => {
         if (type == "Spectrum")
             spectrumize();
         else {
+            redraw();
             // data.sort((a, b) => a - b);
             // kind = '*sorted*';
             // redraw_text();
         }
-        redraw();
     });
 
     document.addEventListener('keydown', e => {
