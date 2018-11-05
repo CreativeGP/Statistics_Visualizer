@@ -1,7 +1,9 @@
 let type = "Sticks";
 let kind = "";
 let settings = {
-    datas: '100',
+    samples: '100',
+    deviation: '0.5',
+    tdev: '',
 };
 
 $(() => {
@@ -17,8 +19,16 @@ $(() => {
 
     let regenerate = () => {
         data = [];
-        for (let i = 0; i < parseInt(settings.datas); i++)
-            data.push(Math.random() * 100);
+        let slope = parseFloat(settings.deviation) / 100;
+        for (let i = 0; i < parseInt(settings.samples); i++) {
+            let beta = Math.sin(Math.random()*Math.PI/2) ** 2;
+            let beta_left = (beta < 0.5) ? 2*beta : 2*(1-beta);
+            let beta_right = (beta > 0.5) ? 2*beta-1 : 2*(1-beta)-1;
+            if (settings.tdev == 't')
+                data.push(beta * 100);
+            else 
+                data.push((slope*beta_left + (1-slope)*beta_right) * 100);
+        }
         redraw();
     };
 
@@ -33,12 +43,41 @@ $(() => {
         }
     };
 
+    let spectrumize = () => {
+        let spec = [];
+        let flat_data = data.map(Math.floor);
+        for (let i = 0; i < 100; i++) {
+            spec.push(flat_data.filter(e => e == i).length);
+        }
+
+        data = spec;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let width = 500 / spec.length;
+        let start = (w-500)/2;
+        for (let i = 0, len = spec.length; i < len; i++) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(start+width*i, 500-spec[i]*3, width-1, spec[i]*3);
+        }
+    };
+
     let redraw_text = () => $('h1').text(`Statistics Visualizer [${type}] ${kind}`);
 
     redraw();
     redraw_text();
 
-
+    $('input').on('change blur', e => {
+        settings[$(e.target).attr('id')] = $(e.target).val();
+        regenerate();
+        if (type == "Spectrum")
+            spectrumize();
+        else {
+            // data.sort((a, b) => a - b);
+            // kind = '*sorted*';
+            // redraw_text();
+        }
+        redraw();
+    });
 
     document.addEventListener('keydown', e => {
         if ($('h4').text() != "") {
@@ -56,13 +95,22 @@ $(() => {
         switch (e.key) {
         case 'r':
             regenerate();
+            type = 'Sticks';
             kind = '';
             redraw_text();
             break;
+
         case 's':
             data.sort((a, b) => a - b);
             redraw();
             kind = '*sorted*';
+            redraw_text();
+            break;
+
+        case 'p':
+            spectrumize();
+            type = 'Spectrum';
+            kind = '';
             redraw_text();
             break;
 
